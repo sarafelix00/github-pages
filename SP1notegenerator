@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SP1 Note Generator</title>
+  <style>
+    :root {
+      --bg: #f4f4f4;
+      --card: #ffffff;
+      --primary: #2c3e50;
+      --accent: #3498db;
+      --danger: #e74c3c;
+      --safe: #2ecc71;
+      --text: #333;
+    }
+    body {
+      margin: 0;
+      background-color: var(--bg);
+      font-family: "Segoe UI", sans-serif;
+    }
+    .header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem 2rem;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .header img {
+      height: 40px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 2rem;
+      background-color: var(--card);
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label, select, input, textarea {
+      margin-bottom: 1rem;
+    }
+    input[type="checkbox"], input[type="radio"] {
+      margin-right: 0.5rem;
+    }
+    .inline-check {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .hidden {
+      display: none;
+    }
+    .result {
+      font-weight: bold;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      border-radius: 4px;
+    }
+    .green {
+      background-color: var(--safe);
+      color: white;
+    }
+    .red {
+      background-color: var(--danger);
+      color: white;
+    }
+    .section-title {
+      font-weight: bold;
+      margin-top: 1.5rem;
+    }
+    textarea {
+      font-family: Arial;
+      font-size: 12px;
+      width: 100%;
+      resize: both;
+      min-height: 100px;
+    }
+    button.copy-btn, button.restart-btn, button.continue-btn {
+      background-color: #3498db;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    .reminder {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #333;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="b2bf163b-3193-4c4e-b954-98a799f711bd.png" alt="Lytegen Logo">
+    SP1 Note Generator
+  </div>
+
+  <div class="container">
+    <label>Is this a SelfGen appointment?</label>
+    <select id="selfgen" onchange="toggleFields()">
+      <option value="">Select</option>
+      <option value="yes">Yes</option>
+      <option value="no">No</option>
+    </select>
+
+    <div id="opener-section" class="hidden">
+      <label>Opener's name: <input type="text" id="opener"></label>
+    </div>
+
+    <div id="details" class="hidden">
+      <div class="inline-check"><input type="checkbox" id="chk-addr" onchange="updateNotes()"> Confirm address</div>
+      <div class="inline-check"><input type="checkbox" id="chk-phone" onchange="updateNotes()"> Confirm phone number</div>
+      <div class="inline-check"><input type="checkbox" id="chk-name" onchange="updateNotes()"> Confirm full name of the HO</div>
+
+      <label><input type="checkbox" id="trueup" onchange="toggleBilling()"> Is this a true up?</label>
+      <div id="monthly">
+        <label>Highest bill ($): <input type="number" id="high"></label>
+        <label>Lowest bill ($): <input type="number" id="low"></label>
+      </div>
+      <div id="annual" class="hidden">
+        <label>Annual bill ($): <input type="number" id="annualBill"></label>
+      </div>
+      <button onclick="calculateAverage()">Calculate Average</button>
+      <div id="bill-result"></div>
+
+      <div class="section-title">Credit Score</div>
+      <div class="inline-check"><input type="radio" name="credit" id="credit-yes" onchange="checkCreditStatus()"> 650 or above</div>
+      <div class="inline-check"><input type="radio" name="credit" id="credit-unknown" onchange="checkCreditStatus()"> Customer is not sure</div>
+      <div id="credit-warning"></div>
+      <div id="cosigner-section" class="hidden">
+        <label>Cosigner available?</label>
+        <select id="cosigner" onchange="cosignerDecision()">
+          <option value="">Select</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+        <div id="cosigner-note"></div>
+      </div>
+
+      <div class="section-title">Roof Type</div>
+      <select id="roof" onchange="checkRoof()">
+        <option value="">Select one</option>
+        <option>clay tiles</option>
+        <option>cement tiles</option>
+        <option>shingles</option>
+        <option>calpac</option>
+        <option>metal</option>
+        <option>composite</option>
+        <option>asphalt shingle</option>
+        <option>slate</option>
+        <option>steel</option>
+        <option>wood/shakes</option>
+      </select>
+      <div id="roof-warning"></div>
+      <div id="roof-age-section" class="hidden">
+        <label>Roof age (years): <input type="number" id="roof-age"></label>
+      </div>
+
+      <div class="section-title">Ground Mount</div>
+      <label>Ground Mount requested?</label>
+      <select id="groundMount" onchange="updateGroundMountNote()">
+        <option value="">Select</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+
+      <div class="section-title">Mobile Home</div>
+      <label>Is it a mobile home?</label>
+      <select id="mobileHome" onchange="toggleFoundationSection()">
+        <option value="">Select</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+
+      <div id="foundation-section" class="hidden">
+        <label>Does the house have a foundation?</label>
+        <select id="foundation" onchange="updateFoundationStatus()">
+          <option value="">Select</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+        <div id="foundation-warning"></div>
+      </div>
+
+      <div class="section-title">Notes</div>
+      <textarea id="notes" rows="6"></textarea>
+      <button class="copy-btn" onclick="copyNotes()">Copy Notes</button>
+      <button class="continue-btn" onclick="checkEligibilityAndContinue()">Continue</button>
+      <button class="restart-btn" onclick="location.reload()">Restart</button>
+      <div class="reminder">Do not forget to leave your note and log your call</div>
+    </div>
+  </div>
+
+  <script>
+    function toggleFields() {
+  const value = document.getElementById('selfgen').value;
+  const opener = document.getElementById('opener-section');
+
+  // Show or hide opener section based on SelfGen selection
+  if (value === 'no') {
+    opener.classList.remove('hidden');
+  } else {
+    opener.classList.add('hidden');
+  }
+
+  // Always show the rest of the form
+  document.getElementById('details').classList.remove('hidden');
+} else {
+    opener.classList.add('hidden');
+  }
+  // Always show the rest of the form
+  document.getElementById('details').classList.remove('hidden');
+} else {
+    opener.classList.add('hidden');
+  }
+  // Always show the form regardless of selfgen status
+  document.getElementById('details').classList.remove('hidden');
+} else if (value === 'yes') {
+        opener.classList.add('hidden');
+        details.classList.remove('hidden');
+      } else {
+        opener.classList.add('hidden');
+        details.classList.add('hidden');
+      }
+    }
+
+    function toggleBilling() {
+      const trueup = document.getElementById('trueup').checked;
+      document.getElementById('monthly').classList.toggle('hidden', trueup);
+      document.getElementById('annual').classList.toggle('hidden', !trueup);
+      document.getElementById('bill-result').innerHTML = '';
+    }
+
+    function calculateAverage() {
+      const trueup = document.getElementById('trueup').checked;
+      let result = document.getElementById('bill-result');
+      result.className = 'result';
+
+      if (trueup) {
+        let annual = parseFloat(document.getElementById('annualBill').value);
+        if (isNaN(annual)) return;
+        if (annual >= 2400) {
+          result.classList.add('green');
+          result.innerText = 'Approved';
+        } else {
+          result.classList.add('green');
+          result.innerText = 'True up is too low';
+        }
+      } else {
+        let high = parseFloat(document.getElementById('high').value);
+        let low = parseFloat(document.getElementById('low').value);
+        if (isNaN(high) || isNaN(low)) return;
+        let avg = (high + low) / 2;
+        if (avg >= 200) {
+          result.classList.add('green');
+          result.innerText = `Approved average: $${avg.toFixed(2)}`;
+        } else {
+          result.classList.add('red');
+          result.innerText = 'Not eligible for the program';
+        }
+      }
+    }
+
+    function updateGroundMountNote() {
+      const value = document.getElementById('groundMount').value;
+      const notes = document.getElementById('notes');
+      if (value === 'yes') {
+        notes.value += "Ground mount was requested.\n";
+      }
+    }
+
+    function toggleFoundationSection() {
+      const isMobile = document.getElementById('mobileHome').value;
+      const section = document.getElementById('foundation-section');
+      if (isMobile === 'yes') {
+        section.classList.remove('hidden');
+      } else {
+        section.classList.add('hidden');
+        document.getElementById('foundation-warning').innerHTML = '';
+      }
+    }
+
+    function updateFoundationStatus() {
+      const value = document.getElementById('foundation').value;
+      const notes = document.getElementById('notes');
+      const warning = document.getElementById('foundation-warning');
+      if (value === 'yes') {
+        notes.value += "Mobile home with foundation.\n";
+        warning.innerHTML = '';
+      } else if (value === 'no') {
+        warning.innerHTML = '<span class="red">Not eligible for the program</span>';
+      } else {
+        warning.innerHTML = '';
+      }
+    }
+
+    function checkCreditStatus() {
+      const unknown = document.getElementById('credit-unknown').checked;
+      const yes = document.getElementById('credit-yes').checked;
+      const cosigner = document.getElementById('cosigner-section');
+      const warn = document.getElementById('credit-warning');
+      const notes = document.getElementById('notes');
+
+      if (unknown) {
+        warn.innerHTML = '<span class="red">Approval needed</span>';
+        cosigner.classList.remove('hidden');
+      } else {
+        warn.innerHTML = '';
+        cosigner.classList.add('hidden');
+        if (yes) notes.value += "Credit score above 650.\n";
+      }
+    }
+
+    function cosignerDecision() {
+      const decision = document.getElementById('cosigner').value;
+      const output = document.getElementById('cosigner-note');
+
+      if (decision === 'yes') {
+        output.innerHTML = '<span class="green">Approved</span>';
+      } else if (decision === 'no') {
+        output.innerHTML = '<span class="red">Potential customer is not eligible for the program</span>';
+      } else {
+        output.innerHTML = '';
+      }
+    }
+
+    function updateNotes() {
+  const selfgen = document.getElementById('selfgen').value;
+  const addr = document.getElementById('chk-addr').checked;
+  const phone = document.getElementById('chk-phone').checked;
+  const name = document.getElementById('chk-name').checked;
+  const high = document.getElementById('high').value;
+  const low = document.getElementById('low').value;
+  const avg = ((parseFloat(high) + parseFloat(low)) / 2).toFixed(2);
+  const annual = document.getElementById('annualBill').value;
+  const trueup = document.getElementById('trueup').checked;
+  const cosigner = document.getElementById('cosigner').value;
+
+  let notes = [];
+  const today = new Date().toLocaleDateString();
+  notes.push(`Date: ${today}`);
+
+  if (selfgen === 'yes') notes.push("This is a SelfGen appointment.");
+  if (selfgen === 'no') notes.push("This is NOT a SelfGen appointment.");
+
+  if (addr) notes.push("Confirmed the customer's address.");
+  if (phone) notes.push("Confirmed the customer's phone number.");
+  if (name) notes.push("Confirmed the full name of the HO.");
+
+  if (trueup && annual) {
+    notes.push(`Customer has solar. True up is $${annual}`);
+  } else if (!trueup && high && low) {
+    notes.push(`Confirmed Highest bill is $${high} and Lowest bill is $${low}`);
+  }
+
+  if (cosigner === 'yes') {
+    notes.push("Cosigner available: Approved");
+  }
+
+  document.getElementById('notes').value = notes.join("
+");"
+");"
+");
+    }
+
+    function copyNotes() {
+      const textarea = document.getElementById('notes');
+      textarea.select();
+      textarea.setSelectionRange(0, 99999);
+      document.execCommand('copy');
+      alert("Notes copied to clipboard.");
+    }
+
+    function checkEligibilityAndContinue() {
+      const reds = document.querySelectorAll('.red');
+      let eligible = true;
+
+      reds.forEach(r => {
+        if (r.innerText.includes("Not eligible")) {
+          eligible = false;
+        }
+      });
+
+      const cosigner = document.getElementById('cosigner')?.value;
+      if (cosigner === 'no') {
+        alert("Cosigner not available. You cannot proceed.");
+        return;
+      }
+
+      if (!eligible) {
+        alert("This customer is not eligible for the program. You cannot proceed.");
+      } else {
+        alert("You may proceed with the process.");
+      }
+    }
+      });
+
+      if (!eligible) {
+        alert("This customer is not eligible for the program. You cannot proceed.");
+      } else {
+        alert("You may proceed with the process.");
+      }
+    }
+  </script>
+</body>
+</html>
